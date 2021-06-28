@@ -1,0 +1,52 @@
+name:                oto
+version:             0.1.0.0
+github:              "jcinnamond/oto"
+license:             BSD3
+author:              "John Cinnamond"
+maintainer:          "john@cinnamond.me.uk"
+copyright:           "2021 John Cinnamond"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/jcinnamond/oto#readme>
+
+dependencies:
+- base >= 4.14 && < 5
+- random == 1.2.0
+- time == 1.9.3
+- strict >= 0.4 && < 1
+- mtl == 2.2.2
+
+library:
+  source-dirs: src
+
+executables:
+  oto-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - oto
+
+tests:
+  oto-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - oto
