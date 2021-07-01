@@ -67,12 +67,25 @@ next s = do
     showCurrent ns
     saveState ns
 
+add :: OtoState -> Name -> IO ()
+add s n = do
+    saveState ns
+  where
+    ns = s{names = names s ++ [n]}
+
+list :: OtoState -> IO ()
+list s = do
+    putStrLn "Names are:"
+    putStrLn $ unlines $ names s
+
 showUsage :: IO ()
-showUsage = putStrLn "usage: oto [next]"
+showUsage = putStrLn "usage: oto [next | add <name> | list]"
 
 runCommand :: OtoState -> IO ()
 runCommand s@OtoState{commands = []} = showCurrent s
 runCommand s@OtoState{commands = ["next"]} = next s
+runCommand s@OtoState{commands = ["add", name]} = add s name
+runCommand s@OtoState{commands = ["list"]} = list s
 runCommand _ = showUsage
 
 main :: IO ()
