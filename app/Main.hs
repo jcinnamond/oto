@@ -3,6 +3,8 @@
 module Main where
 
 import Control.Monad.State
+import Data.Foldable (toList)
+import Data.Sequence (fromList, mapWithIndex)
 import Data.Time (UTCTime (utctDayTime), getCurrentTime)
 import Lib (shuffle)
 import System.Environment (getArgs)
@@ -76,7 +78,12 @@ add s n = do
 list :: OtoState -> IO ()
 list s = do
     putStrLn "Names are:"
-    putStrLn $ unlines $ names s
+    putStrLn $ unlines $ toList $ mapWithIndex addPrefix $ fromList $ names s
+  where
+    addPrefix :: Int -> Name -> String
+    addPrefix i n
+        | i == idx s = " *> " ++ n
+        | otherwise = " -  " ++ n
 
 showUsage :: IO ()
 showUsage = putStrLn "usage: oto [next | add <name> | list]"
