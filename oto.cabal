@@ -25,7 +25,10 @@ source-repository head
 
 library
   exposed-modules:
+      Actions
+      Commands
       Lib
+      OtoState
   other-modules:
       Paths_oto
   hs-source-dirs:
