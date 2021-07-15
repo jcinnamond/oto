@@ -17,7 +17,7 @@ import System.Environment (getArgs)
 import System.IO.Strict (readFile)
 import Prelude hiding (readFile)
 
-import Commands (Command (Command, CommandWithArgs, DefaultCommand), runCommand)
+import Commands (Commands, command, commandWithArgs, defaultCommand, runCommand)
 import OtoState (Name, OtoConfig (..), OtoState (..), initialState)
 
 run :: StateT OtoState IO ()
@@ -73,13 +73,12 @@ list s = do
         | i == idx s = " *> " ++ n
         | otherwise = " -  " ++ n
 
-commands :: [Command]
+commands :: Commands
 commands =
-    [ DefaultCommand showCurrent
-    , Command "list" list
-    , CommandWithArgs "add" add
-    , Command "next" next
-    ]
+    defaultCommand showCurrent
+        <> command "list" list
+        <> commandWithArgs "add" add
+        <> command "next" next
 
 main :: IO ()
 main = initialState loadConfig >>= runCommand commands

@@ -1,7 +1,7 @@
-module Commands (Command (..), runCommand) where
+module Commands (defaultCommand, command, commandWithArgs, runCommand, Commands) where
 
 import Data.Foldable (find)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isJust)
 import qualified Data.Maybe
 import OtoState (OtoState (args, subcommand))
 
@@ -9,26 +9,47 @@ type Action = OtoState -> IO ()
 type ActionWithArgs = [String] -> Action
 
 data Command
-    = DefaultCommand Action
-    | Command String Action
-    | CommandWithArgs String ActionWithArgs
+    = Command Action
+    | CommandWithArgs ActionWithArgs
 
-runCommand :: [Command] -> OtoState -> IO ()
+data Commands = Commands
+    { d :: Maybe Action
+    , cs :: [(String, Command)]
+    }
+
+instance Semigroup Commands where
+    (<>) x y = Commands{d = resolved, cs = resolvecs}
+      where
+        resolved
+            | isJust $ d y = d y
+            | otherwise = d x
+        resolvecs = cs x <> cs y
+
+defaultCommand :: Action -> Commands
+defaultCommand a = Commands{d = Just a, cs = []}
+
+command :: String -> Action -> Commands
+command n a = Commands{d = Nothing, cs = [(n, Command a)]}
+
+commandWithArgs :: String -> ActionWithArgs -> Commands
+commandWithArgs n a = Commands{d = Nothing, cs = [(n, CommandWithArgs a)]}
+
+runCommand :: Commands -> OtoState -> IO ()
 runCommand commands s = do
     case subcommand s of
-        Nothing -> findDefault commands s
-        Just sc -> findCommand sc (args s) commands s
+        Nothing -> (fromMaybe (usage commands) $ d commands) s
+        Just sc -> case find (\(n, _) -> n == sc) (cs commands) of
+            Just (_, Command a) -> a s
+            Just (_, CommandWithArgs a) -> a (args s) s
+            Nothing -> usage commands s
 
-findDefault :: [Command] -> Action
-findDefault [] = usage
-findDefault (DefaultCommand a : _) = a
-findDefault (_ : xs) = findDefault xs
-
-findCommand :: String -> [String] -> [Command] -> Action
-findCommand _ _ [] = usage
-findCommand want _ (Command sc a : _) | sc == want = a
-findCommand want args (CommandWithArgs sc a : _) | sc == want = a args
-findCommand sc args (_ : xs) = findCommand sc args xs
-
-usage :: Action
-usage _ = putStrLn "Usage: ..."
+usage :: Commands -> Action
+usage c _ = do
+    putStrLn "Usage: oto [COMMAND]"
+    putStrLn ""
+    putStrLn "COMMANDS:"
+    putStrLn subcommands
+  where
+    subcommands = unlines $ showCommand <$> cs c
+    showCommand (n, Command _) = "    " ++ n
+    showCommand (n, CommandWithArgs _) = "    " ++ n ++ " <args>"
