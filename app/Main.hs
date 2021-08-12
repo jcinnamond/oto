@@ -11,6 +11,7 @@ commands =
         <> command "list" "show the randomized list of people" A.list
         <> command "next" "advance to the next random person" A.next
         <> commandWithArgs "remove" "[name...]" "remove people from the list" A.remove
+        <> command "shuffle" "shuffles the list" A.shuffle
 
 main :: IO ()
 main = initialState >>= runCommand commands >>= saveState

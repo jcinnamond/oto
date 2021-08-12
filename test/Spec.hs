@@ -1,6 +1,6 @@
 module Main where
 
-import Actions (add, remove)
+import Actions (add, remove, shuffle)
 import Control.Monad.State (liftIO)
 import OtoState (OtoState (OtoState, fileName, idx, names, seed))
 import Test.Hspec (describe, hspec, it, shouldBe)
@@ -37,6 +37,11 @@ main = hspec $ do
         it "removes multiple names including the current last" $ do
             s' <- remove ["Bippy", "Buppy"] s{idx = 2}
             s' `shouldBe` s{names = ["Beppy"], idx = 0}
+
+    describe "shuffle" $ do
+        it "shuffles the list" $ do
+            s' <- shuffle s
+            s' `shouldBe` s{names = ["Buppy", "Beppy", "Bippy"], idx = 0}
   where
     -- setting the seed to 2 shuffles correctly for the test
     s = OtoState{fileName = "", idx = 1, names = ["Beppy", "Buppy", "Bippy"], seed = 2}

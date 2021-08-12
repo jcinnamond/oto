@@ -27,8 +27,8 @@ library
   exposed-modules:
       Actions
       Commands
-      Lib
       OtoState
+      Random
   other-modules:
       Paths_oto
   hs-source-dirs:

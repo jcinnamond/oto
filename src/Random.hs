@@ -1,4 +1,4 @@
-module Lib (
+module Random (
   shuffle,
   maybeShuffle,
 ) where

@@ -4,7 +4,7 @@ module Actions (
   next,
   add,
   remove,
-  removeOne,
+  shuffle,
   Action (..),
   ActionWithArgs (..),
 ) where
@@ -14,8 +14,8 @@ import Data.Foldable (toList)
 import Data.List (delete, elemIndex)
 import Data.Sequence (fromList, mapWithIndex)
 import Data.Time (getCurrentTime, utctDayTime)
-import Lib (maybeShuffle, shuffle)
 import OtoState (Name, OtoState (OtoState, fileName, idx, names, seed), saveState)
+import qualified Random as R (maybeShuffle, shuffle)
 
 type Action = OtoState -> IO OtoState
 type ActionWithArgs = [String] -> Action
@@ -35,7 +35,7 @@ showCurrent :: OtoState -> IO OtoState
 showCurrent s = putStrLn ("Current person is: " ++ (names s !! idx s)) >> pure s
 
 next :: OtoState -> IO OtoState
-next s = showCurrent $ maybeShuffle s{idx = succ (idx s)}
+next s = showCurrent $ R.maybeShuffle s{idx = succ (idx s)}
 
 add :: [Name] -> OtoState -> IO OtoState
 add n s = pure s{names = names s ++ n}
@@ -49,9 +49,12 @@ removeOne n = do
   let newNames = delete n $ names s
   let removeBefore x = x < idx s
   let removeLastName = idx s == length newNames
-  let shuffledNames = shuffle (seed s) newNames
+  let shuffledNames = R.shuffle (seed s) newNames
   case elemIndex n (names s) of
     Nothing -> pure ()
     Just x | removeBefore x -> put s{idx = pred $ idx s, names = newNames}
     Just x | removeLastName -> put s{idx = 0, names = shuffledNames}
     _ -> put s{names = newNames}
+
+shuffle :: OtoState -> IO OtoState
+shuffle s = pure s{names = R.shuffle (seed s) (names s), idx = 0}
