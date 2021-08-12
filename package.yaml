@@ -26,6 +26,7 @@ dependencies:
 - strict >= 0.4 && < 1
 - mtl == 2.2.2
 - containers >= 0.6 && < 1
+- hspec
 
 library:
   source-dirs: src
