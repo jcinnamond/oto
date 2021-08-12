@@ -1,13 +1,11 @@
 module Commands (defaultCommand, command, commandWithArgs, runCommand, Commands) where
 
+import Actions (Action, ActionWithArgs)
 import Data.Foldable (find)
 import Data.Maybe (fromMaybe, isJust)
 import qualified Data.Maybe
 import OtoState (OtoState ())
 import System.Environment (getArgs)
-
-type Action = OtoState -> IO ()
-type ActionWithArgs = [String] -> Action
 
 type CommandName = String
 type HelpText = String
@@ -41,7 +39,7 @@ command n h a = Commands{d = Nothing, cs = [(n, Command a h)]}
 commandWithArgs :: CommandName -> ArgsFormat -> HelpText -> ActionWithArgs -> Commands
 commandWithArgs n af h a = Commands{d = Nothing, cs = [(n, CommandWithArgs a h af)]}
 
-runCommand :: Commands -> OtoState -> IO ()
+runCommand :: Commands -> OtoState -> IO OtoState
 runCommand commands s = do
     args <- getArgs
     case safeHead args of
@@ -56,12 +54,13 @@ runCommand commands s = do
     safeHead (x : _) = Just x
 
 usage :: Commands -> Action
-usage c _ = do
+usage c s = do
     putStrLn "Usage: oto [COMMAND]"
     putStrLn ""
     putStrLn "COMMANDS:"
     putStr $ maybe "" (\h -> "    <default>\t\t" ++ dcHelpText h ++ "\n") (d c)
     putStrLn subcommands
+    pure s
   where
     subcommands = unlines $ showCommand <$> cs c
     showCommand (n, Command _ h) = "    " ++ n ++ "\t\t" ++ h

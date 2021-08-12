@@ -13,4 +13,4 @@ commands =
         <> commandWithArgs "remove" "[name...]" "remove people from the list" A.remove
 
 main :: IO ()
-main = initialState >>= runCommand commands
+main = initialState >>= runCommand commands >>= saveState

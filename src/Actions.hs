@@ -1,4 +1,13 @@
-module Actions (list, showCurrent, next, add, remove, removeOne, removeMany) where
+module Actions (
+  list,
+  showCurrent,
+  next,
+  add,
+  remove,
+  removeOne,
+  Action (..),
+  ActionWithArgs (..),
+) where
 
 import Control.Monad.State (MonadIO (liftIO), MonadState (get, put), State, StateT, execState, execStateT)
 import Data.Foldable (toList)
@@ -8,34 +17,31 @@ import Data.Time (getCurrentTime, utctDayTime)
 import Lib (maybeShuffle, shuffle)
 import OtoState (Name, OtoState (OtoState, fileName, idx, names, seed), saveState)
 
-list :: OtoState -> IO ()
+type Action = OtoState -> IO OtoState
+type ActionWithArgs = [String] -> Action
+
+list :: OtoState -> IO OtoState
 list s = do
   putStrLn "Names are:"
   putStrLn $ unlines $ toList $ mapWithIndex addPrefix $ fromList $ names s
+  pure s
  where
   addPrefix :: Int -> Name -> String
   addPrefix i n
     | i == idx s = " *> " ++ n
     | otherwise = " -  " ++ n
 
-showCurrent :: OtoState -> IO ()
-showCurrent c = putStrLn $ "Current person is: " ++ (names c !! idx c)
+showCurrent :: OtoState -> IO OtoState
+showCurrent s = putStrLn ("Current person is: " ++ (names s !! idx s)) >> pure s
 
-next :: OtoState -> IO ()
-next s = do
-  ns <- execStateT run s
-  showCurrent ns
-  saveState ns
+next :: OtoState -> IO OtoState
+next s = showCurrent $ maybeShuffle s{idx = succ (idx s)}
 
-add :: [Name] -> OtoState -> IO ()
-add n s = do
-  saveState s{names = names s ++ n}
+add :: [Name] -> OtoState -> IO OtoState
+add n s = pure s{names = names s ++ n}
 
-remove :: [Name] -> OtoState -> IO ()
-remove ns s = saveState $ removeMany ns s
-
-removeMany :: [Name] -> OtoState -> OtoState
-removeMany ns = execState (mapM removeOne ns)
+remove :: [Name] -> OtoState -> IO OtoState
+remove ns s = pure $ execState (mapM removeOne ns) s
 
 removeOne :: Name -> State OtoState ()
 removeOne n = do
@@ -49,8 +55,3 @@ removeOne n = do
     Just x | removeBefore x -> put s{idx = pred $ idx s, names = newNames}
     Just x | removeLastName -> put s{idx = 0, names = shuffledNames}
     _ -> put s{names = newNames}
-
-run :: StateT OtoState IO ()
-run = do
-  s <- get
-  put $ maybeShuffle s{idx = succ (idx s)}
