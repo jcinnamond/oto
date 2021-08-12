@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "stack build",
+            "command": "stack build --fast --pedantic",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
@@ -24,10 +24,10 @@
         {
             "label": "test",
             "type": "shell",
-            "command": "stack test",
+            "command": "stack test --fast",
             "presentation": {
                 "echo": true,
-                "reveal": "always",
+                "reveal": "silent",
                 "focus": false,
                 "panel": "dedicated",
                 "showReuseMessage": false,
@@ -36,6 +36,15 @@
             "group": {
                 "kind": "test",
                 "isDefault": true
+            },
+            "problemMatcher": {
+                "fileLocation": "relative",
+                "pattern": {
+                    "regexp": "^\\s*([^:]+):(\\d+):(\\d+):\\s*$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3
+                }
             }
         }
     ]
