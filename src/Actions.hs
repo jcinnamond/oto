@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Actions (
   list,
   showCurrent,
@@ -7,54 +9,76 @@ module Actions (
   shuffle,
   Action (..),
   ActionWithArgs (..),
+  OtoItem (..),
 ) where
 
+import Control.Monad.RWS (MonadReader (ask), MonadWriter (tell), RWS)
 import Control.Monad.State (MonadIO (liftIO), MonadState (get, put), State, StateT, execState, execStateT)
 import Data.Foldable (toList)
 import Data.List (delete, elemIndex)
 import Data.Sequence (fromList, mapWithIndex)
 import Data.Time (getCurrentTime, utctDayTime)
-import OtoState (Name, OtoState (OtoState, fileName, idx, names, seed), saveState)
-import qualified Random as R (maybeShuffle, shuffle)
+import OtoState (Name, OtoConfig (OtoConfig, seed), OtoState (OtoState, idx, names), saveState)
+import qualified Random as R (shuffle)
 
-type Action = OtoState -> IO OtoState
+type Action = RWS OtoConfig [OtoItem] OtoState ()
 type ActionWithArgs = [String] -> Action
 
-list :: OtoState -> IO OtoState
-list s = do
-  putStrLn "Names are:"
-  putStrLn $ unlines $ toList $ mapWithIndex addPrefix $ fromList $ names s
-  pure s
+data OtoItem
+  = CurrentItem Name
+  | OtherItem Name
+  deriving (Show, Eq)
+
+list :: Action
+list = do
+  OtoState{names, idx} <- get
+  tell $ toList $ mapWithIndex (toOtoItem idx) $ fromList names
  where
-  addPrefix :: Int -> Name -> String
-  addPrefix i n
-    | i == idx s = " *> " ++ n
-    | otherwise = " -  " ++ n
+  toOtoItem :: Int -> Int -> Name -> OtoItem
+  toOtoItem idx i n
+    | i == idx = CurrentItem n
+    | otherwise = OtherItem n
 
-showCurrent :: OtoState -> IO OtoState
-showCurrent s = putStrLn ("Current person is: " ++ (names s !! idx s)) >> pure s
+showCurrent :: Action
+showCurrent = do
+  OtoState{names, idx} <- get
+  tell [CurrentItem $ names !! idx]
 
-next :: OtoState -> IO OtoState
-next s = showCurrent $ R.maybeShuffle s{idx = succ (idx s)}
-
-add :: [Name] -> OtoState -> IO OtoState
-add n s = pure s{names = names s ++ n}
-
-remove :: [Name] -> OtoState -> IO OtoState
-remove ns s = pure $ execState (mapM removeOne ns) s
-
-removeOne :: Name -> State OtoState ()
-removeOne n = do
+next :: Action
+next = do
+  c <- ask
   s <- get
-  let newNames = delete n $ names s
-  let removeBefore x = x < idx s
-  let removeLastName = idx s == length newNames
-  let shuffledNames = R.shuffle (seed s) newNames
+  let s' =
+        if idx s >= length (names s)
+          then s{idx = 0, names = R.shuffle (seed c) (names s)}
+          else s{idx = idx s + 1}
+  put s'
+  tell [CurrentItem $ names s' !! idx s']
+
+add :: [Name] -> Action
+add ns = do
+  s <- get
+  put s{names = names s ++ ns}
+
+remove :: [Name] -> Action
+remove = mapM_ removeOne
+
+removeOne :: Name -> Action
+removeOne n = do
+  OtoConfig{seed = seed} <- ask
+  s@OtoState{names = ns, idx = i} <- get
+  let newNames = delete n ns
+  let removeBefore x = x < i
+  let removeLastName = i == length newNames
+  let shuffledNames = R.shuffle seed newNames
   case elemIndex n (names s) of
     Nothing -> pure ()
     Just x | removeBefore x -> put s{idx = pred $ idx s, names = newNames}
     Just x | removeLastName -> put s{idx = 0, names = shuffledNames}
     _ -> put s{names = newNames}
 
-shuffle :: OtoState -> IO OtoState
-shuffle s = pure s{names = R.shuffle (seed s) (names s), idx = 0}
+shuffle :: Action
+shuffle = do
+  OtoConfig{seed} <- ask
+  s <- get
+  put s{names = R.shuffle seed (names s), idx = 0}

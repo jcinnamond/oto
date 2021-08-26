@@ -1,10 +1,11 @@
 module Commands (defaultCommand, command, commandWithArgs, runCommand, Commands) where
 
-import Actions (Action, ActionWithArgs)
+import Actions (Action, ActionWithArgs, OtoItem)
+import Control.Monad.RWS (execRWS)
 import Data.Foldable (find)
 import Data.Maybe (fromMaybe, isJust)
 import qualified Data.Maybe
-import OtoState (OtoState ())
+import OtoState (OtoConfig (OtoConfig), OtoState ())
 import System.Environment (getArgs)
 
 type CommandName = String
@@ -39,28 +40,36 @@ command n h a = Commands{d = Nothing, cs = [(n, Command a h)]}
 commandWithArgs :: CommandName -> ArgsFormat -> HelpText -> ActionWithArgs -> Commands
 commandWithArgs n af h a = Commands{d = Nothing, cs = [(n, CommandWithArgs a h af)]}
 
-runCommand :: Commands -> OtoState -> IO OtoState
-runCommand commands s = do
+runCommand :: Commands -> OtoConfig -> OtoState -> IO (OtoState, [OtoItem])
+runCommand commands config s = do
     args <- getArgs
-    case safeHead args of
-        Nothing -> maybe (usage commands) dcAction (d commands) s
-        Just sc -> case find (\(n, _) -> n == sc) (cs commands) of
-            Just (_, Command a _) -> a s
-            Just (_, CommandWithArgs a _ _) -> a (tail args) s
-            Nothing -> usage commands s
+
+    let cmd = case safeHead args of
+            Nothing -> dcAction <$> d commands
+            Just sc -> case find (\(n, _) -> n == sc) (cs commands) of
+                Just (_, Command a _) -> Just a
+                Just (_, CommandWithArgs a _ _) -> Just $ a (tail args)
+                Nothing -> Nothing
+
+    case cmd of
+        Nothing -> do
+            usage commands
+            pure (s, [])
+        Just a -> do
+            let (s', w) = execRWS a config s
+            pure (s', w)
   where
     safeHead :: [a] -> Maybe a
     safeHead [] = Nothing
     safeHead (x : _) = Just x
 
-usage :: Commands -> Action
-usage c s = do
+usage :: Commands -> IO ()
+usage c = do
     putStrLn "Usage: oto [COMMAND]"
     putStrLn ""
     putStrLn "COMMANDS:"
     putStr $ maybe "" (\h -> "    <default>\t\t" ++ dcHelpText h ++ "\n") (d c)
     putStrLn subcommands
-    pure s
   where
     subcommands = unlines $ showCommand <$> cs c
     showCommand (n, Command _ h) = "    " ++ n ++ "\t\t" ++ h

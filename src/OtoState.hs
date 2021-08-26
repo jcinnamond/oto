@@ -1,4 +1,11 @@
-module OtoState (OtoState (..), OtoConfig (..), Name, initialState, saveState) where
+module OtoState (
+    OtoState (..),
+    OtoConfig (..),
+    Name,
+    initialConfig,
+    initialState,
+    saveState,
+) where
 
 import Data.Time (UTCTime (utctDayTime), getCurrentTime)
 import System.Environment (getArgs)
@@ -6,29 +13,35 @@ import System.IO.Strict (readFile)
 import Prelude hiding (readFile)
 
 data OtoState = OtoState
-    { fileName :: String
-    , idx :: Int
+    { idx :: Int
     , names :: [Name]
-    , seed :: Int
     }
     deriving (Show, Eq)
 
-newtype OtoConfig = OtoConfig
+data OtoConfig = OtoConfig
     { filepath :: String
+    , seed :: Int
     }
 
 type Name = String
 
-initialState :: IO OtoState
-initialState = do
-    let filename = "people2"
-    x <- readFile filename
-    let (idxstr : names) = lines x
+initialConfig :: IO OtoConfig
+initialConfig = do
     seed <- floor . realToFrac . utctDayTime <$> getCurrentTime
-    pure OtoState{fileName = filename, idx = read idxstr, names = names, seed = seed}
+    pure
+        OtoConfig
+            { filepath = "people2"
+            , seed = seed
+            }
 
-saveState :: OtoState -> IO ()
-saveState c = writeFile path newNames
+initialState :: OtoConfig -> IO OtoState
+initialState c = do
+    x <- readFile (filepath c)
+    let (idxstr : names) = lines x
+    pure OtoState{idx = read idxstr, names = names}
+
+saveState :: OtoConfig -> OtoState -> IO ()
+saveState c s = writeFile path newNames
   where
-    newNames = unlines $ show (idx c) : names c
-    path = fileName c
+    newNames = unlines $ show (idx s) : names s
+    path = filepath c
