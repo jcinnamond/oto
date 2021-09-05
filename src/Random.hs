@@ -3,9 +3,7 @@ module Random (
 ) where
 
 import Data.List (sortBy)
-import Data.Time (getCurrentTime, utctDayTime)
-import OtoState (OtoState (OtoState, idx, names))
-import System.Random (Random (randomRs), mkStdGen, uniformR)
+import System.Random (Random (randomRs), mkStdGen)
 
 type Name = String
 

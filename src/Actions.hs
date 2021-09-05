@@ -8,18 +8,17 @@ module Actions (
   remove,
   shuffle,
   delay,
-  Action (..),
-  ActionWithArgs (..),
+  Action,
+  ActionWithArgs,
   OtoItem (..),
 ) where
 
 import Control.Monad.RWS (MonadReader (ask), MonadWriter (tell), RWS)
-import Control.Monad.State (MonadIO (liftIO), MonadState (get, put), State, StateT, execState, execStateT)
+import Control.Monad.State (MonadState (get, put))
 import Data.Foldable (toList)
 import Data.List (delete, elemIndex)
 import Data.Sequence (fromList, mapWithIndex)
-import Data.Time (getCurrentTime, utctDayTime)
-import OtoState (Name, OtoConfig (OtoConfig, seed), OtoState (OtoState, idx, names), saveState)
+import OtoState (Name, OtoConfig (OtoConfig, seed), OtoState (OtoState, idx, names))
 import qualified Random as R (shuffle)
 
 type Action = RWS OtoConfig [OtoItem] OtoState ()
@@ -75,7 +74,7 @@ removeOne n = do
   case elemIndex n (names s) of
     Nothing -> pure ()
     Just x | removeBefore x -> put s{idx = pred $ idx s, names = newNames}
-    Just x | removeLastName -> put s{idx = 0, names = shuffledNames}
+    Just _ | removeLastName -> put s{idx = 0, names = shuffledNames}
     _ -> put s{names = newNames}
 
 shuffle :: Action
@@ -86,7 +85,7 @@ shuffle = do
 
 delay :: Action
 delay = do
-  s@OtoState{names = ns, idx = i} <- get
+  OtoState{names = ns, idx = i} <- get
   let n = ns !! i
   removeOne n
   addAfter n

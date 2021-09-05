@@ -7,7 +7,7 @@ module OtoState (
     saveState,
 ) where
 
-import Data.List (find, isPrefixOf, partition, stripPrefix, uncons)
+import Data.List (isPrefixOf, partition, stripPrefix, uncons)
 import Data.Maybe (fromMaybe)
 import Data.Time (UTCTime (utctDayTime), getCurrentTime)
 import System.Environment (getArgs)
@@ -47,15 +47,15 @@ defaultConfig a = do
 
 setSeed :: OtoConfig -> IO OtoConfig
 setSeed c = do
-    s <- floor . realToFrac . utctDayTime <$> getCurrentTime
+    s <- floor . utctDayTime <$> getCurrentTime
     pure c{seed = s}
 
 setCommand :: (OtoConfig, [String]) -> IO OtoConfig
 setCommand (c, args) = do
     let splitArgs = uncons args
     let command = fst <$> splitArgs
-    let extraArgs = maybe [] snd splitArgs
-    pure c{cmd = command, extraArgs = extraArgs}
+    let xArgs = maybe [] snd splitArgs
+    pure c{cmd = command, extraArgs = xArgs}
 
 setFilepath :: (OtoConfig, [String]) -> IO (OtoConfig, [String])
 setFilepath (c, args) = do
@@ -73,8 +73,8 @@ initialConfig = getArgs >>= defaultConfig >>= setFilepath >>= setCommand >>= set
 initialState :: OtoConfig -> IO OtoState
 initialState c = do
     x <- readFile (filepath c)
-    let (idxstr : names) = lines x
-    pure OtoState{idx = read idxstr, names = names}
+    let (idxstr : ns) = lines x
+    pure OtoState{idx = read idxstr, names = ns}
 
 saveState :: OtoConfig -> OtoState -> IO ()
 saveState c s = writeFile path newNames

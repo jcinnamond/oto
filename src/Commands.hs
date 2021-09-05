@@ -5,10 +5,8 @@ module Commands (defaultCommand, command, commandWithArgs, runCommand, Commands)
 import Actions (Action, ActionWithArgs, OtoItem)
 import Control.Monad.RWS (execRWS)
 import Data.Foldable (find)
-import Data.Maybe (fromMaybe, isJust)
-import qualified Data.Maybe
+import Data.Maybe (isJust)
 import OtoState (OtoConfig (OtoConfig, cmd, extraArgs), OtoState ())
-import System.Environment (getArgs)
 
 type CommandName = String
 type HelpText = String
