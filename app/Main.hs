@@ -3,7 +3,7 @@ module Main where
 import Actions (OtoItem (CurrentItem, NoItems, OtherItem))
 import qualified Actions as A
 import Commands (Commands, command, commandWithArgs, defaultCommand, runCommand)
-import OtoState (OtoConfig (needInit), blankState, initialConfig, initialState, saveState)
+import OtoState (initialConfig, initialState, saveState)
 
 commands :: Commands
 commands =
@@ -25,10 +25,7 @@ printResult = mapM_ (putStrLn . showItem)
 main :: IO ()
 main = do
   c <- initialConfig
-  if needInit c
-    then saveState c blankState
-    else do
-      s <- initialState c
-      (s', w) <- runCommand commands c s
-      printResult w
-      saveState c s'
+  s <- initialState c
+  (s', w) <- runCommand commands c s
+  printResult w
+  saveState c s'

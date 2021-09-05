@@ -3,14 +3,17 @@ module Main where
 import Actions (OtoItem (CurrentItem, NoItems, OtherItem), add, delay, list, next, remove, showCurrent, shuffle)
 import Control.Monad.RWS (execRWS)
 import Control.Monad.State (liftIO)
-import OtoState (OtoConfig (OtoConfig, cmd, extraArgs, filepath, needInit, seed), OtoState (OtoState, idx, names), blankState)
+import OtoState (OtoConfig (OtoConfig, cmd, extraArgs, filepath, seed), OtoState (OtoState, idx, names))
 import Test.Hspec (describe, hspec, it, shouldBe)
 
 initialConfig :: OtoConfig
-initialConfig = OtoConfig{filepath = "", seed = 2, cmd = Nothing, extraArgs = [], needInit = False}
+initialConfig = OtoConfig{filepath = "", seed = 2, cmd = Nothing, extraArgs = []}
 
 initialState :: OtoState
 initialState = OtoState{idx = 1, names = ["Beppy", "Buppy", "Bippy"]}
+
+blankState :: OtoState
+blankState = OtoState{idx = 0, names = []}
 
 testShowCurrent :: IO ()
 testShowCurrent = hspec $ do
