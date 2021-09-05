@@ -27,6 +27,7 @@ type ActionWithArgs = [String] -> Action
 data OtoItem
   = CurrentItem Name
   | OtherItem Name
+  | NoItems
   deriving (Show, Eq)
 
 list :: Action
@@ -42,7 +43,9 @@ list = do
 showCurrent :: Action
 showCurrent = do
   OtoState{names, idx} <- get
-  tell [CurrentItem $ names !! idx]
+  case names of
+    [] -> tell [NoItems]
+    _ -> tell [CurrentItem $ names !! idx]
 
 next :: Action
 next = do

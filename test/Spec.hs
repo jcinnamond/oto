@@ -1,13 +1,13 @@
 module Main where
 
-import Actions (OtoItem (CurrentItem, OtherItem), add, delay, list, next, remove, showCurrent, shuffle)
+import Actions (OtoItem (CurrentItem, NoItems, OtherItem), add, delay, list, next, remove, showCurrent, shuffle)
 import Control.Monad.RWS (execRWS)
 import Control.Monad.State (liftIO)
-import OtoState (OtoConfig (OtoConfig, cmd, extraArgs, filepath, seed), OtoState (OtoState, idx, names))
+import OtoState (OtoConfig (OtoConfig, cmd, extraArgs, filepath, needInit, seed), OtoState (OtoState, idx, names), blankState)
 import Test.Hspec (describe, hspec, it, shouldBe)
 
 initialConfig :: OtoConfig
-initialConfig = OtoConfig{filepath = "", seed = 2, cmd = Nothing, extraArgs = []}
+initialConfig = OtoConfig{filepath = "", seed = 2, cmd = Nothing, extraArgs = [], needInit = False}
 
 initialState :: OtoState
 initialState = OtoState{idx = 1, names = ["Beppy", "Buppy", "Bippy"]}
@@ -19,6 +19,10 @@ testShowCurrent = hspec $ do
             let (s, w) = execRWS showCurrent initialConfig initialState
             w `shouldBe` [CurrentItem "Buppy"]
             s `shouldBe` initialState{idx = 1}
+        it "handles an empty list" $ do
+            let (s, w) = execRWS showCurrent initialConfig blankState
+            w `shouldBe` [NoItems]
+            s `shouldBe` blankState
 
 testList :: IO ()
 testList = hspec $ do
