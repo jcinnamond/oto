@@ -12,8 +12,10 @@ import Control.Monad (when)
 import Data.List (isPrefixOf, partition, stripPrefix, uncons)
 import Data.Maybe (fromMaybe)
 import Data.Time (UTCTime (utctDayTime), getCurrentTime)
+import System.Directory (XdgDirectory (XdgConfig), createDirectoryIfMissing, getXdgDirectory)
 import System.Environment (getArgs, getProgName)
 import System.Environment.Blank (getEnvDefault)
+import System.FilePath (takeDirectory, (</>))
 import System.IO.Error (isDoesNotExistError)
 import System.IO.Strict (readFile)
 import Prelude hiding (readFile)
@@ -36,11 +38,10 @@ type Name = String
 
 defaultConfig :: [String] -> IO (OtoConfig, [String])
 defaultConfig a = do
-    home <- getEnvDefault "HOME" "."
-    xdgHome <- getEnvDefault "XDG_CONFIG_HOME" (home ++ "/.config")
+    dir <- getXdgDirectory XdgConfig "oto"
     pure
         ( OtoConfig
-            { filepath = xdgHome ++ "/oto/state"
+            { filepath = dir </> "state"
             , seed = 1
             , cmd = Nothing
             , extraArgs = []
@@ -88,7 +89,8 @@ handleReadError f e
     | otherwise = ioError e
 
 saveState :: OtoConfig -> OtoState -> IO ()
-saveState c s = writeFile path newNames
+saveState c s = createDirectoryIfMissing True dir >> writeFile path newNames
   where
     newNames = unlines $ show (idx s) : names s
     path = filepath c
+    dir = takeDirectory path

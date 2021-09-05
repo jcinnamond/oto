@@ -36,6 +36,8 @@ library
   build-depends:
       base >=4.14 && <5
     , containers >=0.6 && <1
+    , directory >=1.3.6 && <1.4
+    , filepath >=1.4.2 && <1.5
     , hspec
     , mtl ==2.2.2
     , random ==1.2.0
@@ -53,6 +55,8 @@ executable oto
   build-depends:
       base >=4.14 && <5
     , containers >=0.6 && <1
+    , directory >=1.3.6 && <1.4
+    , filepath >=1.4.2 && <1.5
     , hspec
     , mtl ==2.2.2
     , oto
@@ -72,6 +76,8 @@ test-suite oto-test
   build-depends:
       base >=4.14 && <5
     , containers >=0.6 && <1
+    , directory >=1.3.6 && <1.4
+    , filepath >=1.4.2 && <1.5
     , hspec
     , mtl ==2.2.2
     , oto
