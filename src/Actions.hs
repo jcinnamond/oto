@@ -7,6 +7,7 @@ module Actions (
   add,
   remove,
   shuffle,
+  delay,
   Action (..),
   ActionWithArgs (..),
   OtoItem (..),
@@ -82,3 +83,17 @@ shuffle = do
   OtoConfig{seed} <- ask
   s <- get
   put s{names = R.shuffle seed (names s), idx = 0}
+
+delay :: Action
+delay = do
+  s@OtoState{names = ns, idx = i} <- get
+  let n = ns !! i
+  removeOne n
+  addAfter n
+  showCurrent
+
+addAfter :: Name -> Action
+addAfter n = do
+  s@OtoState{names = ns, idx = i} <- get
+  let (xs, ys) = splitAt (i + 1) ns
+  put s{names = xs ++ [n] ++ ys}

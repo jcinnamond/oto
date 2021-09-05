@@ -1,6 +1,6 @@
 module Main where
 
-import Actions (OtoItem (CurrentItem, OtherItem), add, list, next, remove, showCurrent, shuffle)
+import Actions (OtoItem (CurrentItem, OtherItem), add, delay, list, next, remove, showCurrent, shuffle)
 import Control.Monad.RWS (execRWS)
 import Control.Monad.State (liftIO)
 import OtoState (OtoConfig (OtoConfig, filepath, seed), OtoState (OtoState, idx, names))
@@ -88,5 +88,21 @@ testShuffle = hspec $ do
             let (s, w) = execRWS shuffle initialConfig initialState
             s `shouldBe` s{names = ["Buppy", "Beppy", "Bippy"], idx = 0}
 
+testDelay :: IO ()
+testDelay = hspec $ do
+    describe "delay" $ do
+        it "moves the current person forward in the list" $ do
+            let (s, w) = execRWS delay initialConfig initialState
+            s `shouldBe` s{names = ["Beppy", "Bippy", "Buppy"]}
+            w `shouldBe` [CurrentItem "Bippy"]
+        it "shuffles the list if the current person is at the end" $ do
+            let (s, w) = execRWS delay initialConfig initialState{idx = 2}
+            s `shouldBe` s{names = ["Buppy", "Bippy", "Beppy"]}
+            w `shouldBe` [CurrentItem "Buppy"]
+        it "shuffles and moves the current person if they are at the start of the shuffled list" $ do
+            let (s, w) = execRWS delay initialConfig{seed = 1} initialState{idx = 2}
+            s `shouldBe` s{names = ["Beppy", "Bippy", "Buppy"]}
+            w `shouldBe` [CurrentItem "Beppy"]
+
 main :: IO ()
-main = testNext >> testAdd >> testRemove >> testShowCurrent >> testList >> testShuffle
+main = testNext >> testAdd >> testRemove >> testShowCurrent >> testList >> testShuffle >> testDelay
