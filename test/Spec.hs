@@ -44,8 +44,8 @@ testNext = hspec $ do
             s `shouldBe` initialState{idx = 2}
         it "shuffles at the end of the list" $ do
             let (s, w) = execRWS next initialConfig initialState{idx = 3}
-            w `shouldBe` [CurrentItem "Buppy"]
-            s `shouldBe` initialState{idx = 0, names = ["Buppy", "Beppy", "Bippy"]}
+            w `shouldBe` [CurrentItem "Beppy"]
+            s `shouldBe` initialState{idx = 0, names = ["Beppy", "Bippy", "Buppy"]}
 
 testAdd :: IO ()
 testAdd = hspec $ do
@@ -78,7 +78,7 @@ testRemove = hspec $ do
 
         it "removes the current person at the end of the list" $ do
             let (s, w) = execRWS (remove ["Bippy"]) initialConfig initialState{idx = 2}
-            s `shouldBe` s{names = ["Buppy", "Beppy"], idx = 0}
+            s `shouldBe` s{names = ["Beppy", "Buppy"], idx = 0}
 
         it "removes multiple names from the list" $ do
             let (s, w) = execRWS (remove ["Beppy", "Bippy"]) initialConfig initialState
@@ -93,7 +93,7 @@ testShuffle = hspec $ do
     describe "shuffle" $ do
         it "returns the shuffled list" $ do
             let (s, w) = execRWS shuffle initialConfig initialState
-            s `shouldBe` s{names = ["Buppy", "Beppy", "Bippy"], idx = 0}
+            s `shouldBe` s{names = ["Beppy", "Bippy", "Buppy"], idx = 0}
 
 testDelay :: IO ()
 testDelay = hspec $ do
@@ -104,8 +104,8 @@ testDelay = hspec $ do
             w `shouldBe` [CurrentItem "Bippy"]
         it "shuffles the list if the current person is at the end" $ do
             let (s, w) = execRWS delay initialConfig initialState{idx = 2}
-            s `shouldBe` s{names = ["Buppy", "Bippy", "Beppy"]}
-            w `shouldBe` [CurrentItem "Buppy"]
+            s `shouldBe` s{names = ["Beppy", "Bippy", "Buppy"]}
+            w `shouldBe` [CurrentItem "Beppy"]
         it "shuffles and moves the current person if they are at the start of the shuffled list" $ do
             let (s, w) = execRWS delay initialConfig{seed = 1} initialState{idx = 2}
             s `shouldBe` s{names = ["Beppy", "Bippy", "Buppy"]}

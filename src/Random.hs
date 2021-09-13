@@ -3,17 +3,15 @@ module Random (
 ) where
 
 import Data.List (sortBy)
-import System.Random (Random (randomRs), mkStdGen)
+import Data.Time (getCurrentTime, utctDayTime)
+import OtoState (OtoState (OtoState, idx, names))
+import System.Random (Random (randoms), mkStdGen)
 
 type Name = String
 
 shuffle :: Int -> [Name] -> [Name]
-shuffle seed xs = map snd $ sortBy firstThing (namesPairedWithRandomValue xs)
+shuffle seed xs = map snd $ sortBy listOrder (zip rs xs)
  where
-  firstThing :: (Int, a) -> (Int, a) -> Ordering
-  firstThing x y = compare (fst x) (fst y)
-
-  namesPairedWithRandomValue :: [Name] -> [(Int, Name)]
-  namesPairedWithRandomValue ns = zip rs ns
-
-  rs = randomRs (0, length xs - 1) (mkStdGen seed)
+  listOrder :: Ord a => (a, b) -> (a, b) -> Ordering
+  listOrder x y = compare (fst x) (fst y)
+  rs = randoms (mkStdGen seed) :: [Int]
